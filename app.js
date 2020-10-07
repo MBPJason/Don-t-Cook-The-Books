@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
   user: "root",
 
   // Your password
-  password: "Ja50NO9!59#",
+  password: "",
   database: "accountantDB",
 });
 
@@ -28,7 +28,12 @@ function start() {
       name: "startingLine",
       type: "list",
       message: "What would you like to do?",
-      choices: ["View All Departments", "View All Roles", "View All Employees", "Close Books"],
+      choices: [
+        "View All Departments",
+        "View All Roles",
+        "View All Employees",
+        "Close Books",
+      ],
     })
     .then(function ({ startingLine }) {
       if (startingLine === "View All Departments") {
@@ -57,9 +62,9 @@ function departmentChoices() {
     })
     .then(function ({ departments }) {
       if (departments === "Add a department") {
-        addItem(department);
+        addItem(department).catch(e => { console.error(e) });
       } else if (departments === "Delete a department") {
-        deleteItem(department);
+        deleteItem(department).catch(e => { console.error(e) });
       } else if (departments === "Go back") {
         start();
       }
@@ -80,9 +85,9 @@ function roleChoices() {
     })
     .then(function ({ roles }) {
       if (roles === "Add a role") {
-        addItem(role);
+        addItem(role).catch(e => { console.error(e) });
       } else if (roles === "Delete a role") {
-        deleteItem(role);
+        deleteItem(role).catch(e => { console.error(e) });
       } else if (roles === "Go back") {
         start();
       }
@@ -103,86 +108,86 @@ function employeeChoices() {
     })
     .then(function ({ employees }) {
       if (employees === "Add a employee") {
-        addItem(employee);
+        addItem(employee).catch(e => { console.error(e) });
       } else if (employees === "Delete a employee") {
-        deleteItem(employee);
+        deleteItem(employee).catch(e => { console.error(e) });
       } else if (employees === "Go back") {
         start();
       }
     });
 }
 
-function addItem(item) {}
-
 async function addItem(item) {
-  if (err) throw err;
-  if (item === department) {
-    let { add } = await inquirer.prompt([
-      {
-        name: "add",
-        type: "input",
-        message: "What is the name of the department you want to add?",
-      },
-    ]);
-    connection.query(
-      `INSERT INTO ${item} SET ?;`,
-      {
-        name: add,
-      },
-      function (err, res) {
-        if (err) throw err;
-        console.log(res.affectedRows + " department inserted!\n");
-        start();
-      }
-    );
-  } else if (item === role) {
-    let { add, money } = await inquirer.prompt([
-      {
-        name: "add",
-        type: "input",
-        message: "What is the name of the role you want to add?",
-      },
-      {
-        name: "money",
-        type: "input",
-        message: "How much should this role get paid?",
-      },
-    ]);
-    const chooseDepartment = connection.query(
-      "SELECT * FROM departments",
-      async function (err, results) {
-        if (err) throw err;
-        
-        const { department } = await inquirer.prompt({
-            name: "department",
-            type: "list",
-            message: "Which department does this role belong to?",
-            choice: [results.name]
-        })
-        let data = results.forEach(options => {
-            if (options.name == department) {
+  try {
+    if (item === department) {
+      let { add } = await inquirer.prompt([
+        {
+          name: "add",
+          type: "input",
+          message: "What is the name of the department you want to add?",
+        },
+      ]);
+      connection.query(
+        `INSERT INTO ${item} SET ?;`,
+        {
+          name: add,
+        },
+        function (err, res) {
+          if (err) throw err;
+          console.log(res.affectedRows + " department inserted!\n");
+          start();
+        }
+      );
+    } else if (item === role) {
+      let { add, money } = await inquirer.prompt([
+        {
+          name: "add",
+          type: "input",
+          message: "What is the name of the role you want to add?",
+        },
+        {
+          name: "money",
+          type: "input",
+          message: "How much should this role get paid?",
+        },
+      ]);
+      const chooseDepartment = connection.query(
+        "SELECT * FROM departments",
+        async function (err, results) {
+          if (err) throw err;
+          try {
+            const { department } = await inquirer.prompt({
+              name: "department",
+              type: "list",
+              message: "Which department does this role belong to?",
+              choice: [results.name],
+            });
+            let data = results.forEach((options) => {
+              if (options.name == department) {
                 return options.id;
-            };
-        });
-
-        return data;
-      }
-    );
-    connection.query(
-      `INSERT INTO ${item} SET ?;`,
-      {
-        title: add,
-        salary: money,
-        department_id: chooseDepartment
-      },
-      function (err, res) {
-        if (err) throw err;
-        console.log(res.affectedRows + " role inserted!\n");
-        start();
-      }
-    );
-  } else if (item === employee) {
-    let { first, last } = await inquirer.prompt([
+              }
+            });
+            return data;
+          } catch (error) {
+            console.log(error);
+          }
+        }
+      );
+      connection.query(
+        `INSERT INTO ${item} SET ?;`,
+        {
+          title: add,
+          salary: money,
+          department_id: chooseDepartment,
+        },
+        function (err, res) {
+          if (err) throw err;
+          console.log(res.affectedRows + " role inserted!\n");
+          start();
+        }
+      );
+    } else if (item === employee) {
+      let { first, last } = await inquirer.prompt([
         {
           name: "first",
           type: "input",
@@ -194,38 +199,41 @@ async function addItem(item) {
           message: "What is the last name of this employee?",
         },
       ]);
-      const chooseRole = connection.query(
-        "SELECT * FROM role",
-        async function (err, results) {
+      const chooseRole = connection.query("SELECT * FROM role", async function (
+        err,
+        results
+      ) {
+        if (err) throw err;
+
+        const { role } = await inquirer.prompt({
+          name: "role",
+          type: "list",
+          message: "Which role is this employee gonna take?",
+          choice: [results.name],
+        });
+        let data = results.forEach((options) => {
+          if (options.name == role) {
+            return options.id;
+          }
+        });
+
+        return data;
+      });
+      connection.query(
+        `INSERT INTO ${item} SET ?;`,
+        {
+          first_name: first,
+          last_name: last,
+          role_id: chooseRole,
+        },
+        function (err, res) {
           if (err) throw err;
-          
-          const { role } = await inquirer.prompt({
-              name: "role",
-              type: "list",
-              message: "Which role is this employee gonna take?",
-              choice: [results.name]
-          })
-          let data = results.forEach(options => {
-              if (options.name == role) {
-                  return options.id;
-              };
-          });
-  
-          return data;
+          console.log(res.affectedRows + " inserted!\n");
+          start();
         }
       );
-    connection.query(
-      `INSERT INTO ${item} SET ?;`,
-      {
-        first_name: first,
-        last_name: last,
-        role_id: chooseRole
-      },
-      function (err, res) {
-        if (err) throw err;
-        console.log(res.affectedRows + " inserted!\n");
-        start();
-      }
-    );
+    }
+  } catch (err) {
+    if (err) throw err;
   }
 }
