@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
   user: "root",
 
   // Your password
-  password: "",
+  password: "Ja50NO9!59#",
   database: "accountantDB",
 });
 
@@ -28,7 +28,7 @@ function start() {
       name: "startingLine",
       type: "list",
       message: "What would you like to do?",
-      choices: ["View All Departments", "View All Roles", "View All Employees"],
+      choices: ["View All Departments", "View All Roles", "View All Employees", "Close Books"],
     })
     .then(function ({ startingLine }) {
       if (startingLine === "View All Departments") {
@@ -37,6 +37,8 @@ function start() {
         roleChoices();
       } else if (startingLine === "View All Employees") {
         employeeChoices();
+      } else if (startingLine === "Close Books") {
+        connection.end();
       }
     });
 }
@@ -130,6 +132,7 @@ async function addItem(item) {
       function (err, res) {
         if (err) throw err;
         console.log(res.affectedRows + " department inserted!\n");
+        start();
       }
     );
   } else if (item === role) {
@@ -147,7 +150,7 @@ async function addItem(item) {
     ]);
     const chooseDepartment = connection.query(
       "SELECT * FROM departments",
-      function (err, results) {
+      async function (err, results) {
         if (err) throw err;
         
         const { department } = await inquirer.prompt({
@@ -175,6 +178,7 @@ async function addItem(item) {
       function (err, res) {
         if (err) throw err;
         console.log(res.affectedRows + " role inserted!\n");
+        start();
       }
     );
   } else if (item === employee) {
@@ -192,7 +196,7 @@ async function addItem(item) {
       ]);
       const chooseRole = connection.query(
         "SELECT * FROM role",
-        function (err, results) {
+        async function (err, results) {
           if (err) throw err;
           
           const { role } = await inquirer.prompt({
@@ -220,6 +224,7 @@ async function addItem(item) {
       function (err, res) {
         if (err) throw err;
         console.log(res.affectedRows + " inserted!\n");
+        start();
       }
     );
   }
