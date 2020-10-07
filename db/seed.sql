@@ -13,7 +13,7 @@ CREATE TABLE role(
     id int auto_increment not null,
     title varchar(30) not null,
     salary decimal not null,
-    department_id int,
+    department_id int null,
 
     PRIMARY KEY (id)
 );
